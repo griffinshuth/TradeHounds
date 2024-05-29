@@ -1,36 +1,40 @@
 import type {
   ImagePickerOptions,
   ImagePickerResult,
-  ImagePickerErrorResult,
-  ImageInfo,
+  ImagePickerAsset,
+  ImagePickerSuccessResult,
 } from 'expo-image-picker';
 import React, {useState, useCallback} from 'react';
 import {StyleSheet, View, Image, Dimensions, SafeAreaView} from 'react-native';
 import Button from 'react-native-ui-lib/button';
 import * as ImagePicker from 'expo-image-picker';
 import Carousel from 'react-native-reanimated-carousel';
+
 const windowWidth = Dimensions.get('window').width;
-type PickerSelectedResults = {
-  cancelled: ImagePickerResult['cancelled'];
-  selected: Array<ImageInfo>;
-};
+
+interface CustomImagePickerResult extends ImagePickerSuccessResult {
+  assets: ImagePickerAsset[];
+}
+
 export default function ImagePickerCarouselScreen() {
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState<ImagePickerAsset[]>([]);
+
   const handleOpenGallery = useCallback(async () => {
     const options: ImagePickerOptions = {
       allowsMultipleSelection: true,
       selectionLimit: 0,
     };
 
-    const result = (await ImagePicker.launchImageLibraryAsync(
+    const result: ImagePickerResult = await ImagePicker.launchImageLibraryAsync(
       options,
-    )) as PickerSelectedResults;
+    );
 
-    if (result?.selected.length > 0) {
-      setImages(result?.selected);
+    const customResult = result as CustomImagePickerResult;
+    if (customResult.assets.length > 0) {
+      setImages(customResult.assets);
     }
 
-    //  Just returning if user cancels the photo selection
+    // Just returning if user cancels the photo selection
     return;
   }, []);
 
@@ -47,7 +51,7 @@ export default function ImagePickerCarouselScreen() {
         loop
         data={images}
         renderItem={({item}) => (
-          <Image source={{uri: item?.uri}} style={styles.image} />
+          <Image source={{uri: item.uri}} style={styles.image} />
         )}
         width={windowWidth * 0.8}
         height={windowWidth * 0.8}
